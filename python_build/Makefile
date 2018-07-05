@@ -30,6 +30,13 @@ LIBS	:= -lnx
 # include and lib
 #---------------------------------------------------------------------------------
 
+# Use gnu-sed if it is macos
+ifeq ($(UNAME_S),Darwin)
+	SED := gsed
+else
+	SED := sed
+endif
+
 PYCONFIG_DIR := ../python_config
 
 LIBDIRS	:= $(PORTLIBS) $(LIBNX)
@@ -42,7 +49,7 @@ ifndef PYVERS
 	PYVERS := 2.7.12
 endif
 
-ANAME  := libpython$(shell echo $(PYVERS) | sed 's/\([0-9]*\.\([0-9]*\)\).*/\1/').a
+ANAME  := libpython$(shell echo $(PYVERS) | $(SED) 's/\([0-9]*\.\([0-9]*\)\).*/\1/').a
 
 OUTDIR := nxpy$(PYVERS)
 
@@ -63,9 +70,9 @@ distfPY: linkPY
 	cp $(PYDIR)/Include/* $(OUTDIR)/include/nxpy
 	cp $(PYDIR)/pyconfig.h $(OUTDIR)/include/nxpy/
 	cp $(PYDIR)/Lib/socket.py $(PYDIR)/Lib/socket.pyX
-	cat $(PYDIR)/Lib/socket.pyX | sed 's/'"'"'getpeername'"'"', //g' >$(PYDIR)/Lib/socket.py
+	cat $(PYDIR)/Lib/socket.pyX | $(SED) 's/'"'"'getpeername'"'"', //g' >$(PYDIR)/Lib/socket.py
 	rm $(PYDIR)/Lib/socket.pyX
-	cd $(PYDIR)/Lib && ls *.py -1 | xargs zip ../../$(OUTDIR)/python.zip && find json/ encodings/ -type f | xargs zip ../../$(OUTDIR)/python.zip
+	cd $(PYDIR)/Lib && ls *.py -1 | xargs zip ../../$(OUTDIR)/python.zip && find json/ encodings/ html/ http/ test/ urllib/ collections/ email/ sqlite3/ logging/ xml/ importlib/ -type f | xargs zip ../../$(OUTDIR)/python.zip
 
 	touch distfPY
 
@@ -75,15 +82,15 @@ linkPY: soospatchPY
 soospatchPY: compilePY
 	cp $(PYCONFIG_DIR)/pyconfig.h $(PYDIR)/pyconfig.h
 	cp $(PYDIR)/Modules/posixmodule.c $(PYDIR)/Modules/posixmodule.c_old
-	cat $(PYDIR)/Modules/posixmodule.c_old | sed 's/access(path, mode)/1/' | sed 's/\(^[^rt]*time_t atime, mtime;.*\)/return NULL; \1/' | sed 's/\(^[^ri]*i = (int)umask(i);.*\)/return NULL; \1/' | sed 's/^\([^#][^#]*#undef HAVE_FSTATVFS.*\)/\#undef HAVE_FSTATVFS \1/' | sed 's/#define HAVE_\(EXECV\|FORK\|GETEGID\|GETEUID\|GETGID\|GETPPID\|GETUID\|KILL\|PIPE\|POPEN\|SYSTEM\|TTYNAME\|SYMLINK\|UTIME_H\|FDATASYNC\).*/#undef HAVE_\1/g' | sed 's/^#define HAVE_\(STATVFS\|SYS_STATVFS_H\|FDATASYNC\|FTIME\|SYMLINK\|EXECV\|FORK\|GETEGID\|GETEUID\|GETGID\|GETPPID\|GETUID\|KILL\|PIPE\|POPEN\|SYSTEM\|TTYNAME\|SYMLINK\|UTIME_H\|FDATASYNC\).*/#undef HAVE_\1/' >$(PYDIR)/Modules/posixmodule.c
+	cat $(PYDIR)/Modules/posixmodule.c_old | $(SED) 's/access(path, mode)/1/' | $(SED) 's/\(^[^rt]*time_t atime, mtime;.*\)/return NULL; \1/' | $(SED) 's/\(^[^ri]*i = (int)umask(i);.*\)/return NULL; \1/' | $(SED) 's/^\([^#][^#]*#undef HAVE_FSTATVFS.*\)/\#undef HAVE_FSTATVFS \1/' | $(SED) 's/#define HAVE_\(EXECV\|FORK\|GETEGID\|GETEUID\|GETGID\|GETPPID\|GETUID\|KILL\|PIPE\|POPEN\|SYSTEM\|TTYNAME\|SYMLINK\|UTIME_H\|FDATASYNC\).*/#undef HAVE_\1/g' | $(SED) 's/^#define HAVE_\(STATVFS\|SYS_STATVFS_H\|FDATASYNC\|FTIME\|SYMLINK\|EXECV\|FORK\|GETEGID\|GETEUID\|GETGID\|GETPPID\|GETUID\|KILL\|PIPE\|POPEN\|SYSTEM\|TTYNAME\|SYMLINK\|UTIME_H\|FDATASYNC\).*/#undef HAVE_\1/' >$(PYDIR)/Modules/posixmodule.c
 	cp $(PYDIR)/Modules/socketmodule.c $(PYDIR)/Modules/socketmodule.c_old
-	cat $(PYDIR)/Modules/socketmodule.c_old | sed 's/send(s->sock_fd, buf, len, flags);/send(s->sock_fd, buf, len<4096?len:4096, flags);/g' | sed 's/                             sizeof(addr->sa_data)/                             28/g' >$(PYDIR)/Modules/socketmodule.c
+	cat $(PYDIR)/Modules/socketmodule.c_old | $(SED) 's/send(s->sock_fd, buf, len, flags);/send(s->sock_fd, buf, len<4096?len:4096, flags);/g' | $(SED) 's/                             sizeof(addr->sa_data)/                             28/g' >$(PYDIR)/Modules/socketmodule.c
 	#cp $(PYDIR)/Objects/exceptions.c $(PYDIR)/Objects/exceptions.c_old
-	#cat $(PYDIR)/Objects/exceptions.c_old | sed 's/ESHUTDOWN/110/g' >$(PYDIR)/Objects/exceptions.c
+	#cat $(PYDIR)/Objects/exceptions.c_old | $(SED) 's/ESHUTDOWN/110/g' >$(PYDIR)/Objects/exceptions.c
 	#cp $(PYDIR)/Python/pytime.c $(PYDIR)/Python/pytime.c_old
-	#cat $(PYDIR)/Python/pytime.c_old | sed 's/CLOCK_MONOTONIC/(clockid_t)4/g' >$(PYDIR)/Python/pytime.c
+	#cat $(PYDIR)/Python/pytime.c_old | $(SED) 's/CLOCK_MONOTONIC/(clockid_t)4/g' >$(PYDIR)/Python/pytime.c
 	cp $(PYDIR)/Makefile $(PYDIR)/Makefile_old
-	cat $(PYDIR)/Makefile_old | sed 's/Python\/$$(DYNLOADFILE) \\/\\/' >$(PYDIR)/Makefile
+	cat $(PYDIR)/Makefile_old | $(SED) 's/Python\/$$(DYNLOADFILE) \\/\\/' >$(PYDIR)/Makefile
 	touch soospatchPY
 
 compilePY: extractedPY patchPY
@@ -91,12 +98,12 @@ compilePY: extractedPY patchPY
 
 patchPY:
 	cp $(PYDIR)/configure $(PYDIR)/configure_old
-	cat $(PYDIR)/configure_old | sed 's/	\*\-\*\-linux\*)/	\*\-\*\-linux\*\|aarch64\-none\-elf)/g' >$(PYDIR)/configure
+	cat $(PYDIR)/configure_old | $(SED) 's/	\*\-\*\-linux\*)/	\*\-\*\-linux\*\|aarch64\-none\-elf)/g' >$(PYDIR)/configure
 	echo ac_cv_file__dev_ptmx=no >$(PYDIR)/config.site
 	echo ac_cv_file__dev_ptc=no >>$(PYDIR)/config.site
 	echo ac_cv_lib_dl_dlopen=no >>$(PYDIR)/config.site
 	cp $(PYDIR)/Modules/Setup.dist $(PYDIR)/Modules/Setup.dist_old
-	cat $(PYDIR)/Modules/Setup.dist_old | sed 's/^\([^#].* pwdmodule\.c.*\)/#\1/' | sed 's/^#\(array\|cmath\|math\|_struct\|operator\|_random\|_collections\|itertools\|strop\|unicodedata\|_io\|_csv\|_md5\|_sha\|_sha256\|_sha512\|binascii\|select\|cStringIO\|time\|_functools\|_socket\|datetime\|_bisect\)\(.*\)/\1\2/' >$(PYDIR)/Modules/Setup.dist
+	cat $(PYDIR)/Modules/Setup.dist_old | $(SED) 's/^\([^#].* pwdmodule\.c.*\)/#\1/' | $(SED) 's/^#\(array\|cmath\|math\|_struct\|operator\|_random\|_collections\|itertools\|strop\|unicodedata\|_io\|_csv\|_md5\|_sha\|_sha256\|_sha512\|binascii\|select\|cStringIO\|time\|_functools\|_socket\|datetime\|_bisect\)\(.*\)/\1\2/' >$(PYDIR)/Modules/Setup.dist
 	
 	touch patchPY
 
