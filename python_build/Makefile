@@ -81,8 +81,10 @@ linkPY: soospatchPY
 
 soospatchPY: compilePY
 	cp $(PYCONFIG_DIR)/pyconfig.h $(PYDIR)/pyconfig.h
+	cp $(PYCONFIG_DIR)/thread.c $(PYDIR)/Python/
+	cp $(PYCONFIG_DIR)/thread_nx.h $(PYDIR)/Python/
 	cp $(PYDIR)/Modules/posixmodule.c $(PYDIR)/Modules/posixmodule.c_old
-	cat $(PYDIR)/Modules/posixmodule.c_old | $(SED) 's/access(path, mode)/1/' | $(SED) 's/\(^[^rt]*time_t atime, mtime;.*\)/return NULL; \1/' | $(SED) 's/\(^[^ri]*i = (int)umask(i);.*\)/return NULL; \1/' | $(SED) 's/^\([^#][^#]*#undef HAVE_FSTATVFS.*\)/\#undef HAVE_FSTATVFS \1/' | $(SED) 's/#define HAVE_\(EXECV\|FORK\|GETEGID\|GETEUID\|GETGID\|GETPPID\|GETUID\|KILL\|PIPE\|POPEN\|SYSTEM\|TTYNAME\|SYMLINK\|UTIME_H\|FDATASYNC\).*/#undef HAVE_\1/g' | $(SED) 's/^#define HAVE_\(STATVFS\|SYS_STATVFS_H\|FDATASYNC\|FTIME\|SYMLINK\|EXECV\|FORK\|GETEGID\|GETEUID\|GETGID\|GETPPID\|GETUID\|KILL\|PIPE\|POPEN\|SYSTEM\|TTYNAME\|SYMLINK\|UTIME_H\|FDATASYNC\).*/#undef HAVE_\1/' >$(PYDIR)/Modules/posixmodule.c
+	cat $(PYDIR)/Modules/posixmodule.c_old | $(SED) "s/#ifdef HAVE_TMPNAM/#undef HAVE_TMPNAM\n#ifdef HAVE_TMPNAM/" | $(SED) 's/access(path, mode)/1/' | $(SED) 's/\(^[^rt]*time_t atime, mtime;.*\)/return NULL; \1/' | $(SED) 's/\(^[^ri]*i = (int)umask(i);.*\)/return NULL; \1/' | $(SED) 's/^\([^#][^#]*#undef HAVE_FSTATVFS.*\)/\#undef HAVE_FSTATVFS \1/' | $(SED) 's/#define HAVE_\(EXECV\|FORK\|GETEGID\|GETEUID\|GETGID\|GETPPID\|GETUID\|KILL\|PIPE\|POPEN\|SYSTEM\|TTYNAME\|SYMLINK\|UTIME_H\|FDATASYNC\).*/#undef HAVE_\1/g' | $(SED) 's/^#define HAVE_\(STATVFS\|SYS_STATVFS_H\|FDATASYNC\|FTIME\|SYMLINK\|EXECV\|FORK\|GETEGID\|GETEUID\|GETGID\|GETPPID\|GETUID\|KILL\|PIPE\|POPEN\|SYSTEM\|TTYNAME\|SYMLINK\|UTIME_H\|FDATASYNC\).*/#undef HAVE_\1/' >$(PYDIR)/Modules/posixmodule.c
 	cp $(PYDIR)/Modules/socketmodule.c $(PYDIR)/Modules/socketmodule.c_old
 	cat $(PYDIR)/Modules/socketmodule.c_old | $(SED) 's/send(s->sock_fd, buf, len, flags);/send(s->sock_fd, buf, len<4096?len:4096, flags);/g' | $(SED) 's/                             sizeof(addr->sa_data)/                             28/g' >$(PYDIR)/Modules/socketmodule.c
 	#cp $(PYDIR)/Objects/exceptions.c $(PYDIR)/Objects/exceptions.c_old
@@ -94,7 +96,7 @@ soospatchPY: compilePY
 	touch soospatchPY
 
 compilePY: extractedPY patchPY
-	cd $(PYDIR) && ./configure CC="$(CC)" CXX="$(CXX)" AS="$(AS)" AR="$(AR)" OBJCOPY="$(OBJCOPY)" STRIP="$(STRIP)" NM="$(NM)" RANLIB="$(RANLIB)" CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" ASFLAGS="$(ASFLAGS)" LDFLAGS="$(LDFLAGS)" CONFIG_SITE="config.site" --disable-shared --without-threads --without-doc-strings --disable-ipv6 --host=aarch64-none-elf --build=`./config.guess` && cd .. && touch compilePY
+	cd $(PYDIR) && ./configure CC="$(CC)" CXX="$(CXX)" AS="$(AS)" AR="$(AR)" OBJCOPY="$(OBJCOPY)" STRIP="$(STRIP)" NM="$(NM)" RANLIB="$(RANLIB)" CFLAGS="$(CFLAGS)" CXXFLAGS="$(CXXFLAGS)" ASFLAGS="$(ASFLAGS)" LDFLAGS="$(LDFLAGS)" CONFIG_SITE="config.site" --disable-shared --with-threads --without-doc-strings --disable-ipv6 --host=aarch64-none-elf --build=`./config.guess` && cd .. && touch compilePY
 
 patchPY:
 	cp $(PYDIR)/configure $(PYDIR)/configure_old

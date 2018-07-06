@@ -1142,7 +1142,7 @@
 #define WITH_PYMALLOC 1
 
 /* Define if you want to compile in rudimentary thread support */
-/* #undef WITH_THREAD */
+#define WITH_THREAD
 
 /* Define to profile with the Pentium timestamp counter */
 /* #undef WITH_TSC */
