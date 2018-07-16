@@ -23,4 +23,7 @@ jobs:
           command: make dist
       
       - store_artifacts:
-          path: ./build/PyNX-*.zip
+          path: ./build/PyNX-0.5.1-alpha.zip
+
+      - store_artifacts:
+          path: ./build/PyNX/
