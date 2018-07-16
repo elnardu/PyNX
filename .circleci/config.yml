@@ -3,7 +3,7 @@ jobs:
   build:
     docker:
       - image: devkitpro/devkita64:20180613
-      
+
     steps:
       - checkout
       - run: 
