@@ -1,0 +1,22 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: devkitpro/devkita64:20180613
+      
+    steps:
+      - checkout
+      - run: 
+          name: Print package versions
+          command: dkp-pacman -Q
+      
+      - run:
+          name: Build PyNX
+          command: make
+      
+      - run:
+          name: Make dist
+          command: make dist
+      
+      - store_artifacts:
+          path: ./build/PyNX-*.zip
