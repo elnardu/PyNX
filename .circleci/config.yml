@@ -23,8 +23,8 @@ jobs:
           command: make dist
       
       - run: 
-          command: cp ./build/PyNX-*.zip ./build/PyNX-$CIRCLE_SHA1.zip
+          command: cp ./build/PyNX-*.zip ./build/PyNX.zip
 
       - store_artifacts:
-          path: ./build/PyNX-$CIRCLE_SHA1.zip
+          path: ./build/PyNX.zip
 
